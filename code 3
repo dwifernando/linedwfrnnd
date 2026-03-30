@@ -1,0 +1,76 @@
+int mr1 = 8;    // motor right 1
+int mr2 = 9;    // motor right 2
+int ml1 = 10;   // motor left 1
+int ml2 = 11;   // motor left 2
+int sr = 6;     // sensor right
+int sl = 7;     // sensor left
+int svr = 0;
+int svl = 0;
+int led = 13;
+int enr = 3;    // enable motor right (PWM)
+int enl = 5;    // enable motor left (PWM)
+
+int vspeed = 80;    // kecepatan normal
+int tspeed = 100;   // kecepatan saat belok (lebih pelan dari sebelumnya)
+
+void setup() {
+  pinMode(mr1, OUTPUT);
+  pinMode(mr2, OUTPUT);
+  pinMode(ml1, OUTPUT);
+  pinMode(ml2, OUTPUT);
+  pinMode(led, OUTPUT);
+  pinMode(sr, INPUT);
+  pinMode(sl, INPUT);
+  
+  delay(3000);  // waktu tunggu sebelum mulai
+}
+
+void loop() {
+  svr = digitalRead(sr);
+  svl = digitalRead(sl);
+
+  if (svl == LOW && svr == LOW) {
+    forward();  // maju
+  }
+  else if (svl == HIGH && svr == LOW) {
+    left();     // belok kiri
+  }
+  else if (svl == LOW && svr == HIGH) {
+    right();    // belok kanan
+  }
+  else if (svl == HIGH && svr == HIGH) {
+    stop();     // berhenti (atau bisa backward jika keluar jalur)
+  }
+}
+
+void forward() {
+  digitalWrite(mr1, HIGH);
+  digitalWrite(mr2, LOW);
+  digitalWrite(ml1, HIGH);
+  digitalWrite(ml2, LOW);
+  analogWrite(enr, vspeed);
+  analogWrite(enl, vspeed);
+}
+
+void right() {
+  digitalWrite(mr1, LOW);   // matikan motor kanan
+  digitalWrite(mr2, LOW);
+  digitalWrite(ml1, HIGH);
+  digitalWrite(ml2, LOW);
+  analogWrite(enr, 0);
+  analogWrite(enl, tspeed);
+}
+
+void left() {
+  digitalWrite(mr1, HIGH);
+  digitalWrite(mr2, LOW);
+  digitalWrite(ml1, LOW);   // matikan motor kiri
+  digitalWrite(ml2, LOW);
+  analogWrite(enr, tspeed);
+  analogWrite(enl, 0);
+}
+
+void stop() {
+  analogWrite(enr, 0);
+  analogWrite(enl, 0);
+}

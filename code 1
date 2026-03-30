@@ -1,0 +1,100 @@
+int mr1 = 8;  // Motor right 1
+int mr2 = 9;  // Motor right 2
+int ml1 = 10; // Motor left 1
+int ml2 = 11; // Motor left 2
+int sr = 6;   // Sensor right
+int sl = 7;   // Sensor left
+int svr = 0;
+int svl = 0;
+int led = 13;
+int enr = 3; 
+int enl = 5;
+
+int baseSpeed = 80;     // Kecepatan dasar lebih pelan
+int turnSpeed = 100;    // Kecepatan saat belok
+int maxSpeed = 120;     // Kecepatan maksimum
+int accelStep = 5;      // Langkah percepatan
+int currentSpeed = 0;   // Kecepatan saat ini
+int lostCounter = 0;    // Hitung berapa lama kehilangan garis
+
+void setup()
+{
+  pinMode(mr1, OUTPUT);
+  pinMode(mr2, OUTPUT);
+  pinMode(ml1, OUTPUT);
+  pinMode(ml2, OUTPUT);
+  pinMode(led, OUTPUT);
+  pinMode(sr, INPUT);
+  pinMode(sl, INPUT);
+
+  analogWrite(enr, 0);
+  analogWrite(enl, 0);
+
+  delay(2000); // Waktu tunggu awal
+}
+
+void loop()
+{
+  svr = digitalRead(sr);
+  svl = digitalRead(sl);
+
+  if (svl == LOW && svr == LOW) {
+    forwardSmooth(); // Maju lurus
+    lostCounter = 0;
+  }
+  else if (svl == HIGH && svr == LOW) {
+    turnLeftSmooth(); // Belok kiri
+    lostCounter = 0;
+  }
+  else if (svl == LOW && svr == HIGH) {
+    turnRightSmooth(); // Belok kanan
+    lostCounter = 0;
+  }
+  else if (svl == HIGH && svr == HIGH) {
+    // Garis hitam melintang atau benar-benar keluar dari jalur
+    stopMotors();
+    lostCounter++;
+
+    if (lostCounter > 20) {
+      // Jika terlalu lama tidak menemukan garis, matikan
+      stopMotors();
+      while (1); // Berhenti permanen
+    }
+  }
+}
+
+// Fungsi jalan maju dengan percepatan halus
+void forwardSmooth() {
+  if (currentSpeed < baseSpeed) {
+    currentSpeed += accelStep;
+    if (currentSpeed > baseSpeed) currentSpeed = baseSpeed;
+  }
+  moveMotors(HIGH, LOW, HIGH, LOW, currentSpeed, currentSpeed);
+}
+
+// Fungsi belok kiri halus
+void turnLeftSmooth() {
+  moveMotors(HIGH, LOW, LOW, HIGH, turnSpeed / 2, turnSpeed); // Kiri lambat, kanan cepat
+}
+
+// Fungsi belok kanan halus
+void turnRightSmooth() {
+  moveMotors(LOW, HIGH, HIGH, LOW, turnSpeed, turnSpeed / 2); // Kanan lambat, kiri cepat
+}
+
+// Fungsi berhenti
+void stopMotors() {
+  analogWrite(enr, 0);
+  analogWrite(enl, 0);
+  currentSpeed = 0;
+}
+
+// Fungsi umum untuk menggerakkan motor
+void moveMotors(int m1a, int m1b, int m2a, int m2b, int speedR, int speedL) {
+  digitalWrite(mr1, m1a);
+  digitalWrite(mr2, m1b);
+  digitalWrite(ml1, m2a);
+  digitalWrite(ml2, m2b);
+  analogWrite(enr, constrain(speedR, 0, maxSpeed));
+  analogWrite(enl, constrain(speedL, 0, maxSpeed));
+}
